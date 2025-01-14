@@ -1,0 +1,30 @@
+# 在 fork 的仓库中创建 .github/workflows/sync.yml 文件
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 0点执行
+  workflow_dispatch:      # 允许手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+      - name: Sync Fork
+        run: |
+          git remote add upstream ${{ github.event.repository.parent.html_url || 'ORIGINAL_REPO_URL' }}
+          git fetch upstream
+          git checkout master  # 或者你的默认分支名
+          git merge upstream/master
+          git push origin master
